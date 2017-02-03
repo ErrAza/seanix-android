@@ -39,9 +39,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        String method = "login";
-        /*BackgroundTask backgroundTask = new BackgroundTask(this, BackgroundTask.Task.login);
-        backgroundTask.execute(method, userName, userPassword);*/
+        LoginTask loginTask = new LoginTask(this);
+        loginTask.execute(userName, userPassword);
     }
 
     public void ShowUserRegistration(View view)

@@ -17,8 +17,6 @@ public class Registration extends AppCompatActivity {
     String _userName;
     String _userPass;
 
-    Callback _listener;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

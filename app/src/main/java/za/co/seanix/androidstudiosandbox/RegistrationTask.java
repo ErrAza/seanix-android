@@ -1,8 +1,8 @@
 package za.co.seanix.androidstudiosandbox;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -23,20 +23,71 @@ import java.net.URLEncoder;
 public class RegistrationTask extends BackgroundTask {
 
     private static final String reg_url = "http://www.seanix.co.za/android/android_adduser.php";
-    private static final String check_url = "http://www.seanix.co.za/android/android_checkuser.php";
 
     private String name, userName, userPass, salt, hashedPass;
 
+    public RegistrationTask(Context ctx) {
+        CONTEXT = ctx;
+    }
 
     @Override
     protected void onPreExecute() {
-        _alertDialog = new AlertDialog.Builder(_ctx).create();
-        _alertDialog.setTitle("Login Information...");
+        ALERTDIALOG = new AlertDialog.Builder(CONTEXT).create();
+        ALERTDIALOG.setTitle("Registration Information...");
     }
     @Override
     protected String doInBackground(String... params) {
-        Register();
-        return response;
+
+        name = params[1];
+        userName = params[2];
+        userPass = params[3];
+        salt = PasswordAuthentication.GenerateNewSalt(12);
+        hashedPass = PasswordAuthentication.Hash(userPass, salt);
+        userPass = "";
+
+        try {
+            URL url = new URL(reg_url);
+            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+            httpURLConnection.setRequestMethod("POST");
+            httpURLConnection.setDoOutput(true);
+            OutputStream os = httpURLConnection.getOutputStream();
+            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+
+            // Send login request
+            String data = URLEncoder.encode("user", "UTF-8") + "=" + URLEncoder.encode(name, "UTF-8") + "&" +
+                    URLEncoder.encode("user_name", "UTF-8") + "=" + URLEncoder.encode(userName, "UTF-8") + "&" +
+                    URLEncoder.encode("user_pass", "UTF-8") + "=" + URLEncoder.encode(hashedPass, "UTF-8") + "&" +
+                    URLEncoder.encode("salt", "UTF-8") + "=" + URLEncoder.encode(salt, "UTF-8");
+
+            bufferedWriter.write(data);
+            bufferedWriter.flush();
+            bufferedWriter.close();
+            os.close();
+
+            InputStream inputStream = httpURLConnection.getInputStream();
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "iso-8859-1"));
+            String line = "";
+
+            RESPONSE = "";
+
+            while((line = bufferedReader.readLine()) != null)
+            {
+                RESPONSE += line;
+            }
+
+            bufferedReader.close();
+            inputStream.close();
+            httpURLConnection.disconnect();
+
+            return RESPONSE;
+
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     @Override
@@ -47,74 +98,13 @@ public class RegistrationTask extends BackgroundTask {
 
     @Override
     protected void onPostExecute(String result) {
-        super.onPostExecute(result);
-    }
-
-
-
-    public RegistrationTask(Context ctx, String[]params) {
-        _ctx = ctx;
-        name = params[1];
-        userName = params[2];
-        userPass = params[3];
-        salt = PasswordAuthentication.GenerateNewSalt(12);
-        hashedPass = PasswordAuthentication.Hash(userPass, salt);
-        userPass = "";
-    }
-
-    private void Register()
-    {
-        try {
-            URL url = new URL(check_url);
-            HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
-            httpURLConnection.setRequestMethod("POST");
-            httpURLConnection.setDoOutput(true);
-            OutputStream os = httpURLConnection.getOutputStream();
-            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-
-            // Send Login Details First
-            String data = URLEncoder.encode("user", "UTF-8") + "=" + URLEncoder.encode(name, "UTF-8") + "&" +
-                    URLEncoder.encode("user_name", "UTF-8") + "=" + URLEncoder.encode(userName, "UTF-8");
-
-            bufferedWriter.write(data);
-            bufferedWriter.flush();
-            bufferedWriter.close();
-            os.close();
-
-            InputStream inputStream = httpURLConnection.getInputStream();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "iso-8859-1"));
-            String checkResponse = "";
-            String line = "";
-
-            while((line = bufferedReader.readLine()) != null)
-            {
-                checkResponse += line;
-            }
-
-            bufferedReader.close();
-            inputStream.close();
-            httpURLConnection.disconnect();
-
-            if (checkResponse == "SUCCESS")
-            {
-                // Server has checked there is no conflicting user already in the backend.
-            }
-            else
-            {
-                // Server has let us know that a user with that name/username already exists.
-            }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        Toast.makeText(CONTEXT, result, Toast.LENGTH_LONG).show();
+        if (result == "SUCCESS")
+        {
+            //DO something
         }
     }
 
-    public String GetResponse()
-    {
-        return response;
-    }
 
 
 }
