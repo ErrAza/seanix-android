@@ -1,7 +1,9 @@
 package za.co.seanix.androidstudiosandbox;
 
 import android.content.Context;
+import android.os.Debug;
 import android.support.v7.app.AlertDialog;
+import android.util.DebugUtils;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -11,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,6 +26,10 @@ import java.net.URLEncoder;
 public class LoginTask extends BackgroundTask {
 
     private static final String login_url = "http://www.seanix.co.za/android/android_login.php";
+    private static final String check_url = "http://www.seanix.co.za/android/android_checkuser.php";
+
+    private String login_name;
+    private String login_pass;
 
     public LoginTask(Context ctx)
     {
@@ -37,38 +44,19 @@ public class LoginTask extends BackgroundTask {
 
     @Override
     protected String doInBackground(String... params) {
-        String login_name = params[1];
-        String login_pass = params[2];
-        String salt = FetchSalt(login_name);
+        login_name = params[0];
+        login_pass = params[1];
 
-        if (!salt.isEmpty())
-        {
-            String hashedPass = PasswordAuthentication.Hash(login_pass, salt);
-
-            String loginResponse = AttemptLogin(login_name, hashedPass, salt);
-
-            if (loginResponse != "")
-            {
-                if (loginResponse.contains("SUCCESS"))
-                {
-                    RESPONSE = "Login Success";
-                }
-                else
-                {
-                    RESPONSE = loginResponse;
-                }
-            }
-        }
-
-        return RESPONSE;
+        return FetchSalt(login_name);
     }
 
     @Override
     protected void onPostExecute(String result) {
         Toast.makeText(CONTEXT, result, Toast.LENGTH_LONG).show();
-        if (result == "Login Success")
+        if (result == "SUCCESS")
         {
-            // DO something
+            ALERTDIALOG.setMessage("Login Successful for : " + login_name);
+            ALERTDIALOG.show();
         }
     }
 
@@ -108,9 +96,7 @@ public class LoginTask extends BackgroundTask {
 
             return RESPONSE;
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        }  catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -122,7 +108,7 @@ public class LoginTask extends BackgroundTask {
         String result = "";
 
         try {
-            URL url = new URL(login_url);
+            URL url = new URL(check_url);
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setRequestMethod("POST");
             httpURLConnection.setDoOutput(true);
@@ -136,6 +122,7 @@ public class LoginTask extends BackgroundTask {
             bufferedWriter.close();
             outputStream.close();
 
+            result = String.valueOf(httpURLConnection.getResponseCode());
             InputStream inputStream = httpURLConnection.getInputStream();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "iso-8859-1"));
             RESPONSE = "";
@@ -148,17 +135,24 @@ public class LoginTask extends BackgroundTask {
             inputStream.close();
             httpURLConnection.disconnect();
 
-            if (!RESPONSE.equals("SALT NOT FOUND"))
+            if (!RESPONSE.equals("USER INFO NOT FOUND"))
+            {
+                String salt = RESPONSE;
+                if (!salt.isEmpty())
+                {
+                    String hashedPass = PasswordAuthentication.Hash(login_pass, salt);
+                    return AttemptLogin(login_name, hashedPass, salt);
+                }
+                return RESPONSE;
+            }
+            else
             {
                 return RESPONSE;
             }
 
-        } catch (MalformedURLException e) {
+        }  catch (IOException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return result;
         }
-
-        return result;
     }
 }

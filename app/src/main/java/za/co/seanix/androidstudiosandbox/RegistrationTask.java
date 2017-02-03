@@ -101,7 +101,8 @@ public class RegistrationTask extends BackgroundTask {
         Toast.makeText(CONTEXT, result, Toast.LENGTH_LONG).show();
         if (result == "SUCCESS")
         {
-            //DO something
+            ALERTDIALOG.setMessage("Registration Successful for : " + userName);
+            ALERTDIALOG.show();
         }
     }
 
