@@ -8,12 +8,11 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="za.co.seanix.androidstudiosandbox.MainActivity"
+    tools:context="za.co.seanix.androidstudiosandbox.Activities.MainActivity"
     android:background="@android:color/black">
 
     <Button
         android:text="REGISTER"
-        android:onClick="ShowUserRegistration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btnRegister"
@@ -30,7 +29,6 @@
 
     <Button
         android:text="LOGIN"
-        android:onClick="ShowUserLogin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/btnLogin"
